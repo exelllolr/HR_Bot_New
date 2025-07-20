@@ -1,0 +1,8 @@
+2025-07-20 21:52:30,608 - INFO - Config loaded: TELEGRAM_TOKEN=76886..., DB_HOST=db.fysliamwffulmkliqoiu.supabase.co
+2025-07-20 21:52:30,917 - DEBUG - Using proactor: IocpProactor
+2025-07-20 21:52:51,739 - ERROR - TELEGRAM_TOKEN not found in .env!
+2025-07-20 21:54:10,497 - INFO - Config loaded: TELEGRAM_TOKEN=76886..., DB_HOST=db.fysliamwffulmkliqoiu.supabase.co
+2025-07-20 21:54:10,809 - DEBUG - Using proactor: IocpProactor
+2025-07-20 21:54:57,765 - INFO - Config loaded: TELEGRAM_TOKEN=76886..., DB_HOST=db.fysliamwffulmkliqoiu.supabase.co
+2025-07-20 21:54:58,067 - INFO - Starting Uvicorn server...
+2025-07-20 21:54:58,070 - DEBUG - Using proactor: IocpProactor

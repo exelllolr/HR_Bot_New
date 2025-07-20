@@ -1,0 +1,12 @@
+fastapi==0.110.0
+python-telegram-bot==20.7
+python-dotenv==1.0.1
+psycopg2-binary==2.9.9
+google-auth==2.29.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.134.0
+PyPDF2==3.0.1
+python-docx==1.1.0
+requests==2.32.2
+reportlab==4.2.0

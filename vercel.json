@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "framework": null,
+  "functions": {
+    "api/webhook.py": {
+      "handler": "main.webhook",
+      "runtime": "python3.9"
+    }
+  },
+  "routes": [
+    {
+      "src": "/webhook",
+      "dest": "api/webhook.py"
+    }
+  ],
+  "env": {
+    "TELEGRAM_TOKEN": "@TelegramToken",
+    "GROK_API_KEY": "@GrokApiKey",
+    "DB_NAME": "@DbName",
+    "DB_USER": "@DbUser",
+    "DB_PASSWORD": "@DbPassword",
+    "DB_HOST": "@DbHost",
+    "DB_PORT": "@DbPort"
+  }
+}
