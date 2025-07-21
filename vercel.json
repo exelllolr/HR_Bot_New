@@ -1,15 +1,15 @@
-     {
-       "version": 2,
-       "framework": null,
-       "functions": {
-         "api/webhook.py": {
-           "runtime": "@vercel/python@1.0.0"
-         }
-       },
-       "routes": [
-         {
-           "src": "/webhook",
-           "dest": "api/webhook.py"
-         }
-       ]
-     }
+{
+  "version": 2,
+  "functions": {
+    "api/webhook.py": {
+      "runtime": "@vercel/python",
+      "includeFiles": ["requirements.txt"]
+    }
+  },
+  "routes": [
+    {
+      "src": "/webhook",
+      "dest": "api/webhook.py"
+    }
+  ]
+}
