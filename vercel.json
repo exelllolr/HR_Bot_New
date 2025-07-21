@@ -4,7 +4,7 @@
   "functions": {
     "api/webhook.py": {
       "handler": "webhook",
-      "runtime": "python3.9"
+      "runtime": "python 3.12"
     }
   },
   "routes": [
