@@ -2,8 +2,8 @@
   "version": 2,
   "functions": {
     "api/webhook.py": {
-      "runtime": "@vercel/python",
-      "includeFiles": ["requirements.txt"]
+      "runtime": "python@3.11",
+      "includeFiles": ["requirements.txt", "bot.py"]
     }
   },
   "routes": [
