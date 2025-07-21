@@ -1,20 +1,15 @@
 import os
+from PyPDF2 import PdfReader
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
 import psycopg2
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
-from PyPDF2 import PdfReader
-from docx import Document
 import requests
-import io
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 import re
 import time
 import logging
+from tempfile import NamedTemporaryFile
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +23,6 @@ if not TELEGRAM_TOKEN:
     raise ValueError("TELEGRAM_TOKEN not found in .env!")
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-GOOGLE_SHEETS_CREDENTIALS = "credentials.json"
 DB_CONFIG = {
     "dbname": os.getenv("DB_NAME", "postgres"),
     "user": os.getenv("DB_USER", "postgres"),
@@ -45,12 +39,6 @@ app = FastAPI()
 
 # Инициализация бота
 application = Application.builder().token(TELEGRAM_TOKEN).build()
-
-# Подключение к Google Sheets
-def get_sheets_service():
-    creds = Credentials.from_authorized_user_file(GOOGLE_SHEETS_CREDENTIALS)
-    service = build("sheets", "v4", credentials=creds)
-    return service
 
 # Подключение к PostgreSQL
 def get_db_connection():
@@ -171,8 +159,9 @@ async def handle_resume(update: Update, context):
         await update.message.reply_text("⛔ Только для своих! 😄")
         return ConversationHandler.END
     file = await update.message.document.get_file()
-    file_path = await file.download_to_drive()
-    text = extract_text(file_path)
+    with NamedTemporaryFile(delete=False) as tmp_file:
+        await file.download_to_drive(tmp_file.name)
+        text = extract_text(tmp_file.name)
     vacancy_id = context.user_data["vacancy_id"]
     
     score, analysis = analyze_resume(text, context.user_data.get("vacancy_data"))
@@ -187,24 +176,24 @@ async def handle_resume(update: Update, context):
     cursor.close()
     conn.close()
     
-    append_to_sheets(vacancy_id, text, score, analysis)
-    
-    pdf_path = generate_pdf_report(vacancy_id, text, score, analysis)
-    with open(pdf_path, "rb") as f:
-        await update.message.reply_document(document=f, caption="📋 Вот твой отчёт! 🌟")
-    
-    await update.message.reply_text("🎉 Резюме обработано! Хочешь загрузить ещё? (/add_resume) Или завершить? (/finish) 🚀")
+    # Отключение Google Sheets и PDF на Vercel из-за ограничений
+    await update.message.reply_text(f"🎉 Резюме обработано! Оценка: {score:.1f}, Анализ: {analysis[:100]} Хочешь загрузить ещё? (/add_resume) Или завершить? (/finish) 🚀")
     return PROCESSING
 
 # Извлечение текста
 def extract_text(file_path):
-    if file_path.endswith(".pdf"):
-        with open(file_path, "rb") as f:
-            pdf = PdfReader(f)
-            return " ".join(page.extract_text() or "" for page in pdf.pages)
-    elif file_path.endswith(".docx"):
-        doc = Document(file_path)
-        return " ".join(paragraph.text or "" for paragraph in doc.paragraphs)
+    try:
+        if file_path.endswith(".pdf"):
+            with open(file_path, "rb") as f:
+                pdf = PdfReader(f)
+                return " ".join(page.extract_text() or "" for page in pdf.pages)
+        elif file_path.endswith(".docx"):
+            from docx import Document
+            doc = Document(file_path)
+            return " ".join(paragraph.text or "" for paragraph in doc.paragraphs)
+    finally:
+        import os
+        os.unlink(file_path)
     return ""
 
 # Анализ резюме
@@ -229,29 +218,6 @@ def analyze_resume(resume_text, vacancy_data):
 def extract_score(gpt_response):
     match = re.search(r"\b\d+\.\d\b", gpt_response)
     return float(match.group()) if match else 5.0
-
-# Добавление в Google Sheets
-def append_to_sheets(vacancy_id, resume_text, score, analysis):
-    service = get_sheets_service()
-    sheet = service.spreadsheets()
-    values = [[vacancy_id, resume_text[:100], score, analysis[:100]]]
-    sheet.values().append(
-        spreadsheetId="YOUR_SPREADSHEET_ID",
-        range="Sheet1!A:D",
-        valueInputOption="RAW",
-        body={"values": values}
-    ).execute()
-
-# Генерация PDF-отчёта
-def generate_pdf_report(vacancy_id, resume_text, score, analysis):
-    output_path = f"report_{vacancy_id}.pdf"
-    c = canvas.Canvas(output_path, pagesize=letter)
-    c.drawString(100, 750, f"Отчёт по вакансии #{vacancy_id} 🌟")
-    c.drawString(100, 730, f"Оценка: {score:.1f} ⭐")
-    c.drawString(100, 710, "Анализ:")
-    c.drawString(100, 690, analysis[:500])
-    c.save()
-    return output_path
 
 # Завершение
 async def finish(update: Update, context):
